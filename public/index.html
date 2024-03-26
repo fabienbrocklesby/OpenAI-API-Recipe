@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Recipe Generator</title>
+		<script
+			src="https://unpkg.com/htmx.org@1.9.11"
+			integrity="sha384-0gxUXCCR8yv9FM2b+U3FDbsKthCI66oH5IA9fHppQq9DDMHuMauqq1ZHBpJxQ0J0"
+			crossorigin="anonymous"
+		></script>
+		<style>
+			.htmx-indicator {
+				opacity: 0;
+				transition: opacity 500ms ease-in;
+			}
+			.htmx-request .htmx-indicator {
+				opacity: 1;
+			}
+			.htmx-request.htmx-indicator {
+				opacity: 1;
+			}
+		</style>
+	</head>
+	<body>
+		<form
+			hx-post="/recipe"
+			hx-trigger="submit"
+			hx-target="#recipeOutput"
+			hx-indicator="#loading"
+		>
+			<label for="recipe">Recipe:</label>
+			<input type="text" id="recipe" name="recipe" required />
+			<button type="submit">Get Recipe</button>
+		</form>
+		<div id="loading" class="htmx-indicator">Loading...</div>
+		<div id="recipeOutput"></div>
+	</body>
+</html>
