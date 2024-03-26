@@ -32,7 +32,7 @@ async function getRecipe(recipeName, calories, servingSize, budget) {
 	const messages = [
 		{
 			role: "system",
-			content: "You are a helpful assistant.",
+			content: "You are a helpful assistant with dietary knowledge.",
 		},
 		{
 			role: "user",
@@ -47,13 +47,11 @@ async function getRecipe(recipeName, calories, servingSize, budget) {
 		max_tokens: 1500,
 		temperature: 0.7,
 	});
-
 	let recipeText = response["choices"][0]["message"]["content"];
 	let parsedRecipe;
 
 	recipeText = recipeText.replace("```json", "").replace("```", "").trim();
 
-	console.log(recipeText);
 	try {
 		parsedRecipe = JSON.parse(recipeText);
 	} catch (error) {
@@ -81,6 +79,58 @@ app.post("/recipe", async (req, res) => {
 		console.error(error);
 		res.status(500).send("Internal Server Error");
 	}
+});
+
+app.post("/calculateHealthMetrics", async (req, res) => {
+	const age = req.body.age;
+	const weight = req.body.weight;
+	const height = req.body.height;
+	const gender = req.body.gender;
+	const activityLevel = req.body.activityLevel;
+
+	let bmr;
+	if (gender === "male") {
+		bmr = 10 * weight + 6.25 * height - 5 * age + 5;
+	} else if (gender === "female") {
+		bmr = 10 * weight + 6.25 * height - 5 * age - 161;
+	} else {
+		res.status(400).send("Invalid gender");
+		return;
+	}
+
+	const heightInMeters = height / 100;
+	const bmi = weight / (heightInMeters * heightInMeters);
+
+	let maintenanceCalories;
+	switch (activityLevel) {
+		case "sedentary":
+			maintenanceCalories = bmr * 1.2;
+			break;
+		case "light":
+			maintenanceCalories = bmr * 1.375;
+			break;
+		case "moderate":
+			maintenanceCalories = bmr * 1.55;
+			break;
+		case "active":
+			maintenanceCalories = bmr * 1.725;
+			break;
+		case "very active":
+			maintenanceCalories = bmr * 1.9;
+			break;
+		default:
+			res.status(400).send("Invalid activity level");
+			return;
+	}
+
+	let bodyFatPercentage;
+	if (gender === "male") {
+		bodyFatPercentage = 1.2 * bmi + 0.23 * age - 16.2;
+	} else if (gender === "female") {
+		bodyFatPercentage = 1.2 * bmi + 0.23 * age - 5.4;
+	}
+
+	res.send({ maintenanceCalories, bodyFatPercentage });
 });
 
 const port = process.env.PORT || 3000;
