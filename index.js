@@ -13,7 +13,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public")));
 
-async function getRecipe(recipeName, calories, budget) {
+async function getRecipe(recipeName, calories, servingSize, budget) {
 	let prompt = `Provide a detailed recipe`;
 	if (recipeName) {
 		prompt += ` for "${recipeName}"`;
@@ -21,10 +21,13 @@ async function getRecipe(recipeName, calories, budget) {
 	if (calories) {
 		prompt += ` with approximately ${calories} calories`;
 	}
+	if (servingSize) {
+		prompt += ` that serves for ${servingSize} people`;
+	}
 	if (budget) {
 		prompt += ` that can be made for under ${budget} dollars`;
 	}
-	prompt += `. Please format the response as a JSON object with the following properties: "nutritionalInformation", "ingredients", "directions", and "estimatedPrice". The "nutritionalInformation" property should be an object with properties for "calories", "protein", "carbohydrates", and "fat". The "ingredients" property should be an array of objects, each with properties for "name", "quantity", and "price". The "directions" property should be an array of strings, each representing a step in the cooking instructions. The "estimatedPrice" property should be a number representing the total price estimate of all ingredients.`;
+	prompt += `. Please format the response as a JSON object with the following properties: "servingSize", "nutritionalInformation", "ingredients", "directions", and "estimatedPrice". The "servingSize" property should be a number representing the number of servings. The "nutritionalInformation" property should be an object with properties for "calories", "protein", "carbohydrates", and "fat". The "ingredients" property should be an array of objects, each with properties for "name", "quantity", and "price". The "directions" property should be an array of strings, each representing a step in the cooking instructions. The "estimatedPrice" property should be a number representing the total price estimate of all ingredients.`;
 
 	const messages = [
 		{
@@ -44,8 +47,12 @@ async function getRecipe(recipeName, calories, budget) {
 		temperature: 0.7,
 	});
 
-	const recipeText = response["choices"][0]["message"]["content"];
+	let recipeText = response["choices"][0]["message"]["content"];
 	let parsedRecipe;
+
+	recipeText = recipeText.replace("```json", "").replace("```", "").trim();
+
+	console.log(recipeText);
 	try {
 		parsedRecipe = JSON.parse(recipeText);
 	} catch (error) {
@@ -58,10 +65,16 @@ async function getRecipe(recipeName, calories, budget) {
 app.post("/recipe", async (req, res) => {
 	const recipeName = req.body.recipe;
 	const calories = req.body.calories;
+	const servingSize = req.body.servingSize;
 	const budget = req.body.budget;
 
 	try {
-		const recipeData = await getRecipe(recipeName, calories, budget);
+		const recipeData = await getRecipe(
+			recipeName,
+			calories,
+			servingSize,
+			budget
+		);
 		res.send(recipeData);
 	} catch (error) {
 		console.error(error);
