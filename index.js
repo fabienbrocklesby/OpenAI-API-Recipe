@@ -14,9 +14,9 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public")));
 
 async function getRecipe(recipeName, calories, budget) {
-	let prompt = `Provide a recipe`;
+	let prompt = `Provide a detailed recipe`;
 	if (recipeName) {
-		prompt += ` for ${recipeName}`;
+		prompt += ` for "${recipeName}"`;
 	}
 	if (calories) {
 		prompt += ` with approximately ${calories} calories`;
@@ -24,7 +24,7 @@ async function getRecipe(recipeName, calories, budget) {
 	if (budget) {
 		prompt += ` that can be made for under ${budget} dollars`;
 	}
-	prompt += `. Please format the response with detailed nutritional information, ingredients, directions, and price information in separate sections. Start with "Nutritional Information:" and provide exact figures for calories, protein, carbohydrates, and fat. Follow this with "Ingredients:" and a list of ingredients with quantities. Then provide "Directions:" followed by step-by-step cooking instructions. Finally, provide "Estimated Price:" followed by the price estimate.`;
+	prompt += `. Please format the response as a JSON object with the following properties: "nutritionalInformation", "ingredients", "directions", and "estimatedPrice". The "nutritionalInformation" property should be an object with properties for "calories", "protein", "carbohydrates", and "fat". The "ingredients" property should be an array of objects, each with properties for "name", "quantity", and "price". The "directions" property should be an array of strings, each representing a step in the cooking instructions. The "estimatedPrice" property should be a number representing the total price estimate of all ingredients.`;
 
 	const messages = [
 		{
@@ -45,45 +45,20 @@ async function getRecipe(recipeName, calories, budget) {
 	});
 
 	const recipeText = response["choices"][0]["message"]["content"];
-	console.log(recipeText);
-
-	const parsedRecipe = parseRecipe(recipeText);
+	let parsedRecipe;
+	try {
+		parsedRecipe = JSON.parse(recipeText);
+	} catch (error) {
+		console.error("Error parsing JSON:", error);
+		parsedRecipe = { error: "Error parsing recipe" };
+	}
 	return parsedRecipe;
-}
-
-function parseRecipe(text) {
-	const lowerCaseText = text.toLowerCase();
-	const trimmedText = lowerCaseText.replace(/ +/g, " ");
-
-	const priceStartIndex = trimmedText.search(/-[^-\n]+:\s*\$[\d.]+/);
-
-	const sections = [
-		trimmedText.split("nutritional information:\n")[1] || "",
-		trimmedText.split("\n\ningredients:\n")[1] || "",
-		trimmedText.split("\n\ndirections:\n")[1] || "",
-		priceStartIndex !== -1 ? trimmedText.slice(priceStartIndex) : "",
-	];
-
-	const nutritionalInfoSection = sections[0].split("\n\n")[0];
-	const ingredientsSection = sections[1].split("\n\n")[0];
-	const directionsSection = sections[2].split("\n\n")[0];
-	const priceSection = sections[3];
-
-	const ingredientsHTML = ingredientsSection.replace(/\n- /g, "<br>- ");
-	const directionsHTML = directionsSection.replace(/\n/g, "<br>");
-	const nutritionalInfoHTML = nutritionalInfoSection.replace(/\n- /g, "<br>- ");
-
-	return `<h2>Nutritional Information:</h2><p>${nutritionalInfoHTML}</p><h2>Ingredients:</h2><p>${ingredientsHTML}</p><h2>Directions:</h2><p>${directionsHTML}</p><h2>Estimated Price:</h2><p>${priceSection}</p>`;
 }
 
 app.post("/recipe", async (req, res) => {
 	const recipeName = req.body.recipe;
 	const calories = req.body.calories;
 	const budget = req.body.budget;
-
-	// if (!recipeName) {
-	// 	return res.status(400).send("Please specify a recipe name");
-	// }
 
 	try {
 		const recipeData = await getRecipe(recipeName, calories, budget);
