@@ -7,31 +7,47 @@
 			integrity="sha384-0gxUXCCR8yv9FM2b+U3FDbsKthCI66oH5IA9fHppQq9DDMHuMauqq1ZHBpJxQ0J0"
 			crossorigin="anonymous"
 		></script>
-		<style>
-			.htmx-indicator {
-				opacity: 0;
-				transition: opacity 500ms ease-in;
-			}
-			.htmx-request .htmx-indicator {
-				opacity: 1;
-			}
-			.htmx-request.htmx-indicator {
-				opacity: 1;
-			}
-		</style>
+		<link
+			href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+			rel="stylesheet"
+			integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+			crossorigin="anonymous"
+		/>
+		<link rel="stylesheet" href="./style.css" />
 	</head>
 	<body>
-		<form
-			hx-post="/recipe"
-			hx-trigger="submit"
-			hx-target="#recipeOutput"
-			hx-indicator="#loading"
-		>
-			<label for="recipe">Recipe:</label>
-			<input type="text" id="recipe" name="recipe" required />
-			<button type="submit">Get Recipe</button>
-		</form>
-		<div id="loading" class="htmx-indicator">Loading...</div>
-		<div id="recipeOutput"></div>
+		<div class="container">
+			<div class="row justify-content-center">
+				<div class="col-6">
+					<form
+						hx-post="/recipe"
+						hx-trigger="submit"
+						hx-target="#recipeOutput"
+						hx-indicator="#loading"
+						class="mt-5"
+					>
+						<div class="mb-3">
+							<label for="recipe" class="form-label">Recipe:</label>
+							<input
+								type="text"
+								id="recipe"
+								name="recipe"
+								class="form-control"
+								required
+							/>
+						</div>
+						<button type="submit" class="btn btn-primary">Get Recipe</button>
+					</form>
+					<div id="loading" class="htmx-indicator mt-3">Loading...</div>
+					<div id="recipeOutput" class="mt-3"></div>
+				</div>
+			</div>
+		</div>
+
+		<script
+			src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+			integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+			crossorigin="anonymous"
+		></script>
 	</body>
 </html>
