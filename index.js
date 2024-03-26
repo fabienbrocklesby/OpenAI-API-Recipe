@@ -42,6 +42,7 @@ async function getRecipe(recipeName, calories, servingSize, budget) {
 
 	const response = await openai.chat.completions.create({
 		model: "gpt-3.5-turbo",
+		response_format: { type: "json_object" },
 		messages: messages,
 		max_tokens: 1500,
 		temperature: 0.7,
