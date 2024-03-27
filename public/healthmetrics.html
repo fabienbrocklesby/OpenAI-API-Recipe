@@ -23,6 +23,7 @@
 						hx-target="#healthMetricsOutput"
 						hx-indicator="#loading"
 						hx-swap-oob="true"
+						id="healthMetricsInput"
 						class="mt-5"
 					>
 						<div class="mb-3">
@@ -93,8 +94,13 @@
 			</div>
 		</div>
 		<script>
-			document.body.addEventListener("htmx:afterOnLoad", function (event) {
+			document.body.addEventListener("htmx:afterSwap", function (event) {
 				const data = JSON.parse(event.detail.xhr.responseText);
+
+				data.gender = document.getElementById("gender").value;
+
+				localStorage.setItem("healthMetricsData", JSON.stringify(data));
+
 				let html = "<h2>Results</h2>";
 				html += `<p><span style="font-weight: bold; font-size: 1em;">Maintenance Calories:</span> ${data.maintenanceCalories.toFixed(
 					2

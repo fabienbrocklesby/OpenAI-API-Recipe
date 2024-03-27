@@ -17,6 +17,19 @@
 		<div class="container">
 			<div class="row justify-content-center">
 				<div class="col-6">
+					<div id="message" class="alert alert-info mt-3" style="display: none">
+						<div class="form-check">
+							<input
+								type="checkbox"
+								class="form-check-input"
+								id="useProfileData"
+								checked
+							/>
+							<label class="form-check-label" for="useProfileData"
+								>Use your health metrics profile</label
+							>
+						</div>
+					</div>
 					<form
 						hx-post="/calculaterequiredcalories"
 						hx-trigger="submit"
@@ -25,7 +38,7 @@
 						hx-vals='javascript:{ "weightChange": document.getElementById("weightChange").value * document.getElementById("weightChangeSign").value, "timeFrame": document.getElementById("timeFrame").value, "maintenanceCalories": document.getElementById("maintenanceCalories").value, "gender": document.querySelector("input[name=gender]:checked").value }'
 						class="mt-5"
 					>
-						<div class="input-group">
+						<div class="input-group mb-3">
 							<select id="weightChangeSign" class="form-control">
 								<option selected value="1">+</option>
 								<option value="-1">-</option>
@@ -97,6 +110,50 @@
 			</div>
 		</div>
 		<script>
+			window.onload = function () {
+				const storedData = localStorage.getItem("healthMetricsData");
+				if (storedData) {
+					const data = JSON.parse(storedData);
+
+					document.getElementById("maintenanceCalories").value =
+						data.maintenanceCalories.toFixed(2);
+					document.querySelector(
+						`input[name="gender"][value="${data.gender}"]`
+					).checked = true;
+
+					const messageDiv = document.getElementById("message");
+					messageDiv.style.display = "block";
+
+					document.getElementById("useProfileData").checked = true;
+				}
+			};
+
+			document
+				.getElementById("useProfileData")
+				.addEventListener("change", function () {
+					const storedData = localStorage.getItem("healthMetricsData");
+					if (storedData) {
+						const data = JSON.parse(storedData);
+
+						if (this.checked) {
+							// Refill the form fields with the stored data
+							document.getElementById("maintenanceCalories").value =
+								data.maintenanceCalories.toFixed(2);
+							document.querySelector(
+								`input[name="gender"][value="${data.gender}"]`
+							).checked = true;
+							// Refill other form fields...
+						} else {
+							// Clear the form fields
+							document.getElementById("maintenanceCalories").value = "";
+							document.querySelector(
+								`input[name="gender"]:checked`
+							).checked = false;
+							// Clear other form fields...
+						}
+					}
+				});
+
 			document.addEventListener("htmx:afterOnLoad", function (event) {
 				var data = event.detail.xhr.response;
 				var json = JSON.parse(data);
