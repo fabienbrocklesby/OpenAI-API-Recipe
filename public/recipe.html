@@ -63,6 +63,33 @@
 								class="form-control"
 							/>
 						</div>
+						<div class="mb-3 form-check">
+							<input
+								type="checkbox"
+								class="form-check-input"
+								id="bodybuilderStyle"
+								name="bodybuilderStyle"
+								onclick="toggleBodybuilderOptions()"
+							/>
+							<label class="form-check-label" for="bodybuilderStyle"
+								>Bodybuilder</label
+							>
+						</div>
+						<div
+							id="bodybuilderOptions"
+							style="display: none"
+							class="form-group mb-3"
+						>
+							<label for="bodybuilderOption">Choose an option:</label>
+							<select
+								id="bodybuilderOption"
+								name="bodybuilderOption"
+								class="form-control"
+							>
+								<option value="bulking">Bulking</option>
+								<option value="cutting">Cutting</option>
+							</select>
+						</div>
 						<button type="submit" class="btn btn-primary">Get Recipe</button>
 					</form>
 					<div id="loading" class="htmx-indicator mt-3">Loading...</div>
@@ -71,6 +98,16 @@
 			</div>
 		</div>
 		<script type="text/javascript">
+			window.onload = function () {
+				document.getElementById("bodybuilderStyle").checked = false;
+
+				var options = document.getElementById("bodybuilderOptions");
+				var select = document.getElementById("bodybuilderOption");
+
+				options.style.display = "none";
+				select.disabled = true;
+			};
+
 			document.body.addEventListener("htmx:afterOnLoad", function (event) {
 				const recipe = JSON.parse(event.detail.xhr.responseText);
 
@@ -96,6 +133,15 @@
 
 				document.querySelector("#recipeOutput").innerHTML = html;
 			});
+
+			function toggleBodybuilderOptions() {
+				var checkbox = document.getElementById("bodybuilderStyle");
+				var options = document.getElementById("bodybuilderOptions");
+				var select = document.getElementById("bodybuilderOption");
+
+				options.style.display = checkbox.checked ? "block" : "none";
+				select.disabled = !checkbox.checked;
+			}
 		</script>
 		<script
 			src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"

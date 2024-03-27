@@ -25,7 +25,15 @@ app.get("/calculatecalories", function (req, res) {
 	res.sendFile(path.join(__dirname, "public", "calculatecalories.html"));
 });
 
-async function getRecipe(recipeName, calories, servingSize, budget) {
+async function getRecipe(
+	recipeName,
+	calories,
+	servingSize,
+	budget,
+	bodybuilderStyle,
+	bodybuilderOption
+) {
+	console.log(recipeName, calories, servingSize, budget, bodybuilderStyle);
 	let prompt = `Provide a detailed recipe`;
 	if (recipeName) {
 		prompt += ` for "${recipeName}"`;
@@ -38,6 +46,12 @@ async function getRecipe(recipeName, calories, servingSize, budget) {
 	}
 	if (budget) {
 		prompt += ` that can be made for under ${budget} dollars`;
+	}
+	if (bodybuilderStyle) {
+		prompt += ` that is suitable for a bodybuilder's diet`;
+		if (bodybuilderOption) {
+			prompt += ` with a focus on ${bodybuilderOption}`;
+		}
 	}
 	prompt += `. Please format the response as a JSON object with the following properties: "servingSize", "nutritionalInformation", "ingredients", "directions", and "estimatedPrice". The "servingSize" property should be a number representing the number of servings. The "nutritionalInformation" property should be an object with properties for "calories", "protein", "carbohydrates", and "fat". The "ingredients" property should be an array of objects, each with properties for "name", "quantity", and "price". The "directions" property should be an array of strings, each representing a step in the cooking instructions. The "estimatedPrice" property should be a number representing the total price estimate of all ingredients.`;
 
@@ -74,14 +88,24 @@ async function getRecipe(recipeName, calories, servingSize, budget) {
 }
 
 app.post("/recipe", async (req, res) => {
-	const { recipeName, calories, servingSize, budget } = req.body;
+	const {
+		recipe,
+		calories,
+		servingSize,
+		budget,
+		bodybuilderStyle,
+		bodybuilderOption,
+	} = req.body;
+	console.log(req.body);
 
 	try {
 		const recipeData = await getRecipe(
-			recipeName,
+			recipe,
 			calories,
 			servingSize,
-			budget
+			budget,
+			bodybuilderStyle,
+			bodybuilderOption
 		);
 		res.send(recipeData);
 	} catch (error) {
