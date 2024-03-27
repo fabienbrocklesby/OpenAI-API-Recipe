@@ -21,6 +21,10 @@ app.get("/healthmetrics", function (req, res) {
 	res.sendFile(path.join(__dirname, "public", "healthmetrics.html"));
 });
 
+app.get("/calculatecalories", function (req, res) {
+	res.sendFile(path.join(__dirname, "public", "calculatecalories.html"));
+});
+
 async function getRecipe(recipeName, calories, servingSize, budget) {
 	let prompt = `Provide a detailed recipe`;
 	if (recipeName) {
@@ -70,10 +74,7 @@ async function getRecipe(recipeName, calories, servingSize, budget) {
 }
 
 app.post("/recipe", async (req, res) => {
-	const recipeName = req.body.recipe;
-	const calories = req.body.calories;
-	const servingSize = req.body.servingSize;
-	const budget = req.body.budget;
+	const { recipeName, calories, servingSize, budget } = req.body;
 
 	try {
 		const recipeData = await getRecipe(
@@ -90,11 +91,7 @@ app.post("/recipe", async (req, res) => {
 });
 
 app.post("/calculateHealthMetrics", async (req, res) => {
-	const age = req.body.age;
-	const weight = req.body.weight;
-	const height = req.body.height;
-	const gender = req.body.gender;
-	const activityLevel = req.body.activityLevel;
+	const { age, weight, height, gender, activityLevel } = req.body;
 
 	let bmr;
 	if (gender === "male") {
@@ -148,7 +145,11 @@ app.post("/calculateHealthMetrics", async (req, res) => {
 });
 
 app.post("/calculaterequiredcalories", async (req, res) => {
-	const { weightChange, timeFrame, maintenanceCalories, gender } = req.body;
+	let { weightChange, timeFrame, maintenanceCalories, gender } = req.body;
+
+	weightChange = parseInt(weightChange);
+	timeFrame = parseInt(timeFrame);
+	maintenanceCalories = parseInt(maintenanceCalories);
 
 	const totalCaloricChange = weightChange * 3500;
 
@@ -160,7 +161,8 @@ app.post("/calculaterequiredcalories", async (req, res) => {
 
 	const requiredDailyCalories = maintenanceCalories + dailyCaloricChange;
 
-	res.send({ requiredDailyCalories });
+	console.log(requiredDailyCalories);
+	res.json({ requiredDailyCalories });
 });
 
 const port = process.env.PORT || 3000;
