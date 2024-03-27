@@ -13,6 +13,14 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public")));
 
+app.get("/recipe", function (req, res) {
+	res.sendFile(path.join(__dirname, "public", "recipe.html"));
+});
+
+app.get("/healthmetrics", function (req, res) {
+	res.sendFile(path.join(__dirname, "public", "healthmetrics.html"));
+});
+
 async function getRecipe(recipeName, calories, servingSize, budget) {
 	let prompt = `Provide a detailed recipe`;
 	if (recipeName) {
@@ -102,35 +110,57 @@ app.post("/calculateHealthMetrics", async (req, res) => {
 	const bmi = weight / (heightInMeters * heightInMeters);
 
 	let maintenanceCalories;
+	let activityAdjustment;
+
 	switch (activityLevel) {
 		case "sedentary":
 			maintenanceCalories = bmr * 1.2;
+			activityAdjustment = 0;
 			break;
 		case "light":
 			maintenanceCalories = bmr * 1.375;
+			activityAdjustment = 0.6;
 			break;
 		case "moderate":
 			maintenanceCalories = bmr * 1.55;
+			activityAdjustment = 1.3;
 			break;
 		case "active":
 			maintenanceCalories = bmr * 1.725;
+			activityAdjustment = 1.8;
 			break;
 		case "very active":
 			maintenanceCalories = bmr * 1.9;
+			activityAdjustment = 2.3;
 			break;
 		default:
 			res.status(400).send("Invalid activity level");
 			return;
 	}
 
-	let bodyFatPercentage;
 	if (gender === "male") {
-		bodyFatPercentage = 1.2 * bmi + 0.23 * age - 16.2;
+		bodyFatPercentage = 1.2 * bmi + 0.23 * age - 16.2 - activityAdjustment;
 	} else if (gender === "female") {
-		bodyFatPercentage = 1.2 * bmi + 0.23 * age - 5.4;
+		bodyFatPercentage = 1.2 * bmi + 0.23 * age - 5.4 - activityAdjustment;
 	}
 
 	res.send({ maintenanceCalories, bodyFatPercentage });
+});
+
+app.post("/calculaterequiredcalories", async (req, res) => {
+	const { weightChange, timeFrame, maintenanceCalories, gender } = req.body;
+
+	const totalCaloricChange = weightChange * 3500;
+
+	let dailyCaloricChange = totalCaloricChange / timeFrame;
+
+	if (gender === "female") {
+		dailyCaloricChange *= 0.85;
+	}
+
+	const requiredDailyCalories = maintenanceCalories + dailyCaloricChange;
+
+	res.send({ requiredDailyCalories });
 });
 
 const port = process.env.PORT || 3000;
