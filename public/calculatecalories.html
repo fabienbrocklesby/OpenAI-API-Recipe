@@ -22,12 +22,14 @@
 						hx-trigger="submit"
 						hx-target="#result"
 						hx-swap-oob="true"
+						hx-vals='javascript:{ "weightChange": document.getElementById("weightChange").value * document.getElementById("weightChangeSign").value, "timeFrame": document.getElementById("timeFrame").value, "maintenanceCalories": document.getElementById("maintenanceCalories").value, "gender": document.querySelector("input[name=gender]:checked").value }'
 						class="mt-5"
 					>
-						<div class="mb-3">
-							<label for="weightChange" class="form-label"
-								>Weight Change:</label
-							>
+						<div class="input-group">
+							<select id="weightChangeSign" class="form-control">
+								<option selected value="1">+</option>
+								<option value="-1">-</option>
+							</select>
 							<input
 								type="number"
 								id="weightChange"
@@ -38,7 +40,9 @@
 						</div>
 
 						<div class="mb-3">
-							<label for="timeFrame" class="form-label">Time Frame:</label>
+							<label for="timeFrame" class="form-label"
+								>Time Frame (in days):</label
+							>
 							<input
 								type="number"
 								id="timeFrame"
@@ -96,7 +100,9 @@
 			document.addEventListener("htmx:afterOnLoad", function (event) {
 				var data = event.detail.xhr.response;
 				var json = JSON.parse(data);
-				var html = `<p>Required Daily Calories: ${json.requiredDailyCalories}</p>`;
+				var html = `<p>Required Daily Calories: ${json.requiredDailyCalories.toFixed(
+					2
+				)} kcal</p>`;
 				document.getElementById("result").innerHTML = html;
 			});
 		</script>
