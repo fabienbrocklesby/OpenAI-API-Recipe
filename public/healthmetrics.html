@@ -111,6 +111,9 @@
 				html += `<p><span style="font-weight: bold; font-size: 1em;">Body Fat Percentage:</span> ${data.bodyFatPercentage.toFixed(
 					2
 				)}%</p>`;
+				html += `<p><span style="font-weight: bold; font-size: 1em;">Metabolism Rate (BMR):</span> ${data.bmr.toFixed(
+					2
+				)}%</p>`;
 				document.getElementById("healthMetricsOutput").innerHTML = html;
 			});
 		</script>

@@ -74,6 +74,7 @@
 								id="maintenanceCalories"
 								name="maintenanceCalories"
 								class="form-control"
+								step="0.01"
 								required
 							/>
 						</div>
@@ -107,12 +108,12 @@
 							<input
 								class="form-check-input"
 								type="checkbox"
-								id="useAI"
-								name="useAI"
+								id="useDetailedFactors"
+								name="useDetailedFactors"
 								value="true"
 							/>
-							<label class="form-check-label" for="useAI">
-								Use AI for calculations
+							<label class="form-check-label" for="useDetailedFactors">
+								Use more detailed factors
 							</label>
 						</div>
 
@@ -123,15 +124,10 @@
 							</div>
 
 							<div class="mb-3">
-								<label for="metabolismRate" class="form-label"
-									>Metabolism Rate:</label
+								<label for="bmr" class="form-label"
+									>Metabolism Rate (BMR):</label
 								>
-								<input
-									type="text"
-									id="metabolismRate"
-									name="metabolismRate"
-									class="form-control"
-								/>
+								<input type="text" id="bmr" name="bmr" class="form-control" />
 							</div>
 
 							<div class="mb-3">
@@ -173,6 +169,7 @@
 						`input[name="gender"][value="${data.gender}"]`
 					).checked = true;
 					document.getElementById("age").value = data.age;
+					document.getElementById("bmr").value = data.bmr;
 					document.getElementById("weight").value = data.weight;
 					document.getElementById("height").value = data.height;
 
@@ -180,18 +177,20 @@
 					messageDiv.style.display = "block";
 
 					document.getElementById("useProfileData").checked = true;
-					document.getElementById("useAI").checked = false;
+					document.getElementById("useDetailedFactors").checked = false;
 				}
 			};
 
-			document.getElementById("useAI").addEventListener("change", function () {
-				const aiParametersDiv = document.getElementById("aiParameters");
-				if (this.checked) {
-					aiParametersDiv.style.display = "block";
-				} else {
-					aiParametersDiv.style.display = "none";
-				}
-			});
+			document
+				.getElementById("useDetailedFactors")
+				.addEventListener("change", function () {
+					const aiParametersDiv = document.getElementById("aiParameters");
+					if (this.checked) {
+						aiParametersDiv.style.display = "block";
+					} else {
+						aiParametersDiv.style.display = "none";
+					}
+				});
 
 			document
 				.getElementById("useProfileData")
@@ -207,6 +206,7 @@
 								`input[name="gender"][value="${data.gender}"]`
 							).checked = true;
 							document.getElementById("age").value = data.age;
+							document.getElementById("bmr").value = data.bmr;
 							document.getElementById("weight").value = data.weight;
 							document.getElementById("height").value = data.height;
 						} else {
@@ -215,6 +215,7 @@
 								`input[name="gender"]:checked`
 							).checked = false;
 							document.getElementById("age").value = "";
+							document.getElementById("bmr").value = "";
 							document.getElementById("weight").value = "";
 							document.getElementById("height").value = "";
 						}

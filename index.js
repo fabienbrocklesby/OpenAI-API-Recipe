@@ -127,6 +127,8 @@ app.post("/calculateHealthMetrics", async (req, res) => {
 		return;
 	}
 
+	console.log(bmr);
+
 	const heightInMeters = height / 100;
 	const bmi = weight / (heightInMeters * heightInMeters);
 
@@ -165,7 +167,7 @@ app.post("/calculateHealthMetrics", async (req, res) => {
 		bodyFatPercentage = 1.2 * bmi + 0.23 * age - 5.4 - activityAdjustment;
 	}
 
-	res.send({ maintenanceCalories, bodyFatPercentage });
+	res.send({ maintenanceCalories, bodyFatPercentage, bmr });
 });
 
 app.post("/calculaterequiredcalories", async (req, res) => {
@@ -174,9 +176,9 @@ app.post("/calculaterequiredcalories", async (req, res) => {
 		timeFrame,
 		maintenanceCalories,
 		gender,
-		useAI,
+		useDetailedFactors,
 		age,
-		metabolismRate,
+		bmr,
 		weight,
 		height,
 	} = req.body;
@@ -196,12 +198,22 @@ app.post("/calculaterequiredcalories", async (req, res) => {
 
 	let requiredDailyCalories = maintenanceCalories + dailyCaloricChange;
 
-	if (useAI) {
-		requiredDailyCalories = await adjustCaloriesWithAI(
+	// if (useAI) {
+	// 	requiredDailyCalories = await adjustCaloriesWithAI(
+	// 		requiredDailyCalories,
+	// 		age,
+	// 		metabolismRate,
+	// 		gender,
+	// 		weight,
+	// 		height
+	// 	);
+	// }
+
+	if (useDetailedFactors) {
+		requiredDailyCalories = calculateCaloriesWithDetailedFactors(
 			requiredDailyCalories,
+			bmr,
 			age,
-			metabolismRate,
-			gender,
 			weight,
 			height
 		);
@@ -210,59 +222,103 @@ app.post("/calculaterequiredcalories", async (req, res) => {
 	res.json({ requiredDailyCalories });
 });
 
-async function adjustCaloriesWithAI(
-	calories,
+function calculateCaloriesWithDetailedFactors(
+	requiredDailyCalories,
+	bmr,
 	age,
-	metabolismRate,
-	sex,
 	weight,
 	height
 ) {
-	const prompt = `Given a person with the following information: 
-          - Age: ${age} years old
-          - Sex: ${sex}
-          - Metabolism rate: ${metabolismRate}
-          - Weight: ${weight} kg
-          - Height: ${height} cm
-          - Original calorie intake suggestion: ${calories} calories
-  
-  Considering these factors, what is the most precise daily calorie intake this person should consume? 
+	let bmrFactor;
+	if (bmr < 1600) {
+		bmrFactor = 1.05; // adjust these values as needed
+	} else if (bmr >= 1600 && bmr < 2000) {
+		bmrFactor = 1.0;
+	} else {
+		bmrFactor = 0.95; // adjust these values as needed
+	}
 
-  Please respond with a JSON object with a single property "caloriesRequired" containing the calculated value.
+	let ageFactor;
+	if (age < 18) {
+		ageFactor = 1.1; // was 1.2
+	} else if (age >= 18 && age <= 35) {
+		ageFactor = 1.0;
+	} else if (age > 35 && age <= 55) {
+		ageFactor = 0.95; // was 0.9
+	} else {
+		ageFactor = 0.9; // was 0.8
+	}
 
-  **Note:** 
-  * A faster metabolism might require significantly more calories, while a slower metabolism might require significantly fewer.
-  * Sex, weight, and height play a major role in basal metabolic rate (BMR) which influences calorie needs. 
+	// Calculate BMI
+	let heightInMeters = height / 100;
+	let bmi = weight / (heightInMeters * heightInMeters);
 
-  Please make a substantial adjustment to the original calorie intake suggestion based on these factors.
-  `;
+	let bmiFactor;
+	if (bmi < 18.5) {
+		bmiFactor = 1.1; // was 1.2
+	} else if (bmi >= 18.5 && bmi < 25) {
+		bmiFactor = 1.0;
+	} else if (bmi >= 25 && bmi < 30) {
+		bmiFactor = 0.95; // was 0.9
+	} else {
+		bmiFactor = 0.9; // was 0.8
+	}
 
-	const messages = [
-		{
-			role: "system",
-			content:
-				"You are a registered dietitian with access to extensive dietary data. Please provide a precise numerical answer based on the provided information.",
-		},
-		{
-			role: "user",
-			content: prompt,
-		},
-	];
-
-	const response = await openai.chat.completions.create({
-		model: "gpt-3.5-turbo",
-		response_format: { type: "json_object" },
-		messages: messages,
-		max_tokens: 1500,
-		temperature: 0.1,
-	});
-
-	const adjustedCalories = JSON.parse(
-		response.choices[0].message.content
-	).caloriesRequired;
-
-	return adjustedCalories;
+	return requiredDailyCalories * bmrFactor * ageFactor * bmiFactor;
 }
+// async function adjustCaloriesWithAI(
+// 	calories,
+// 	age,
+// 	metabolismRate,
+// 	sex,
+// 	weight,
+// 	height
+// ) {
+// 	const prompt = `Given a person with the following information:
+//           - Age: ${age} years old
+//           - Sex: ${sex}
+//           - Metabolism rate: ${metabolismRate}
+//           - Weight: ${weight} kg
+//           - Height: ${height} cm
+//           - Original calorie intake suggestion: ${calories} calories
+
+//   Considering these factors, what is the most precise daily calorie intake this person should consume?
+
+//   Please respond with a JSON object with a single property "caloriesRequired" containing the calculated value.
+
+//   **Note:**
+//   * A faster metabolism might require significantly more calories, while a slower metabolism might require significantly fewer.
+//   * Sex, weight, and height play a major role in basal metabolic rate (BMR) which influences calorie needs.
+
+//   Please make a substantial adjustment to the original calorie intake suggestion based on these factors.
+//   `;
+
+// 	const messages = [
+// 		{
+// 			role: "system",
+// 			content:
+// 				"You are a registered dietitian with access to extensive dietary data. Please provide a precise numerical answer based on the provided information.",
+// 		},
+// 		{
+// 			role: "user",
+// 			content: prompt,
+// 		},
+// 	];
+
+// 	const response = await openai.chat.completions.create({
+// 		model: "gpt-3.5-turbo",
+// 		response_format: { type: "json_object" },
+// 		messages: messages,
+// 		max_tokens: 1500,
+// 		temperature: 0.1,
+// 	});
+
+// 	const adjustedCalories = JSON.parse(
+// 		response.choices[0].message.content
+// 	).caloriesRequired;
+
+// 	return adjustedCalories;
+// }
 
 const port = process.env.PORT || 3000;
 
