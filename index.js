@@ -169,7 +169,18 @@ app.post("/calculateHealthMetrics", async (req, res) => {
 });
 
 app.post("/calculaterequiredcalories", async (req, res) => {
-	let { weightChange, timeFrame, maintenanceCalories, gender } = req.body;
+	let {
+		weightChange,
+		timeFrame,
+		maintenanceCalories,
+		gender,
+		useAI,
+		age,
+		metabolismRate,
+		weight,
+		height,
+	} = req.body;
+	console.log(req.body);
 
 	weightChange = parseInt(weightChange);
 	timeFrame = parseInt(timeFrame);
@@ -183,11 +194,75 @@ app.post("/calculaterequiredcalories", async (req, res) => {
 		dailyCaloricChange *= 0.85;
 	}
 
-	const requiredDailyCalories = maintenanceCalories + dailyCaloricChange;
+	let requiredDailyCalories = maintenanceCalories + dailyCaloricChange;
 
-	console.log(requiredDailyCalories);
+	if (useAI) {
+		requiredDailyCalories = await adjustCaloriesWithAI(
+			requiredDailyCalories,
+			age,
+			metabolismRate,
+			gender,
+			weight,
+			height
+		);
+	}
+
 	res.json({ requiredDailyCalories });
 });
+
+async function adjustCaloriesWithAI(
+	calories,
+	age,
+	metabolismRate,
+	sex,
+	weight,
+	height
+) {
+	const prompt = `Given a person with the following information: 
+          - Age: ${age} years old
+          - Sex: ${sex}
+          - Metabolism rate: ${metabolismRate}
+          - Weight: ${weight} kg
+          - Height: ${height} cm
+          - Original calorie intake suggestion: ${calories} calories
+  
+  Considering these factors, what is the most precise daily calorie intake this person should consume? 
+
+  Please respond with a JSON object with a single property "caloriesRequired" containing the calculated value.
+
+  **Note:** 
+  * A faster metabolism might require significantly more calories, while a slower metabolism might require significantly fewer.
+  * Sex, weight, and height play a major role in basal metabolic rate (BMR) which influences calorie needs. 
+
+  Please make a substantial adjustment to the original calorie intake suggestion based on these factors.
+  `;
+
+	const messages = [
+		{
+			role: "system",
+			content:
+				"You are a registered dietitian with access to extensive dietary data. Please provide a precise numerical answer based on the provided information.",
+		},
+		{
+			role: "user",
+			content: prompt,
+		},
+	];
+
+	const response = await openai.chat.completions.create({
+		model: "gpt-3.5-turbo",
+		response_format: { type: "json_object" },
+		messages: messages,
+		max_tokens: 1500,
+		temperature: 0.1,
+	});
+
+	const adjustedCalories = JSON.parse(
+		response.choices[0].message.content
+	).caloriesRequired;
+
+	return adjustedCalories;
+}
 
 const port = process.env.PORT || 3000;
 

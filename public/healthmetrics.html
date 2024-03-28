@@ -97,7 +97,10 @@
 			document.body.addEventListener("htmx:afterSwap", function (event) {
 				const data = JSON.parse(event.detail.xhr.responseText);
 
+				data.age = document.getElementById("age").value;
 				data.gender = document.getElementById("gender").value;
+				data.height = document.getElementById("height").value;
+				data.weight = document.getElementById("weight").value;
 
 				localStorage.setItem("healthMetricsData", JSON.stringify(data));
 
